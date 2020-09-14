@@ -4,7 +4,8 @@
 Nécessite Pillow & PyQt5
 """
 
-from os import system, listdir, mkdir, environ
+import json
+from os import system, listdir, mkdir, environ, getenv
 from os.path import join, isfile, isdir, getmtime
 from sys import platform, exit
 from time import time
@@ -112,20 +113,47 @@ def reset_screen(banner):
         system("clear")
     print(*banner)
 
+def sauvegarde_json(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final):
+    dictionnaire = {
+            "dimensions" : [[largeur1, hauteur1], [largeur2,hauteur2]],
+            "background_color" : background_color,
+            "format_final" : format_final
+            }
+    if not isdir(json_path):
+        mkdir(json_path)
+    with open(join(json_path, "config_redim"), "w") as f:
+        json.dump(dictionnaire, f)
+
+def lecture_json(json_path):
+    with open(join(json_path, "config_redim"), "r") as f:
+            dictionnaire = json.load(f)
+    largeur1 = dictionnaire["dimensions"][0][0]
+    hauteur1 = dictionnaire["dimensions"][0][1]
+    largeur2 = dictionnaire["dimensions"][1][0]
+    hauteur2 = dictionnaire["dimensions"][1][1]
+    background_color = dictionnaire["background_color"]
+    format_final = dictionnaire["format_final"]
+    return largeur1, hauteur1, largeur2, hauteur2, background_color, format_final
+
 if __name__ == "__main__":
     largeur1 = 500
     hauteur1 = 350
     largeur2 = 900
     hauteur2 = 900
     background_color = [255, 255, 255]
-    formats_acceptes = ("jpg", "jpeg", "png", "bmp", "gif", "webp")
     format_final = ".webp"
+    formats_acceptes = ("jpg", "jpeg", "png", "bmp", "gif", "webp")
+    json_path = join(getenv("USERPROFILE"), "AppData", "Local", "Redim")
     app = QApplication([])
     widget = QWidget()
-    if platform != "linux":
-        redim.nettoyage_pyinstaller()
     while True:
         redim = Redim(formats_acceptes)
+        if not isfile(join(json_path, "config_redim")):
+            sauvegarde_json(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+        else:
+            largeur1, hauteur1, largeur2, hauteur2, background_color, format_final = lecture_json(json_path)
+        if platform != "linux":
+            redim.nettoyage_pyinstaller()
         banner = (
                 "\n  ____                 _                 ____   ____ \n",
                 "|  _ \\ _ __ ___ _ __ (_)_   _ _ __ ___ |  _ \\ / ___|\n",
@@ -142,9 +170,10 @@ if __name__ == "__main__":
         menu = (
                 "\n[-] Que faire?\n",
                 "\n   (1) -> Conversion (", largeur1, "x", hauteur1, "px et", largeur2, "x", hauteur2, "px)",
-                "\n   (6) -> Modification des tailles",
-                "\n   (7) -> Modification du RGB",
-                "\n   (8) -> Modification du format de sortie",
+                "\n   (5) -> Modification des tailles",
+                "\n   (6) -> Modification du RGB",
+                "\n   (7) -> Modification du format de sortie",
+                "\n   (8) -> Reset des parametres",
                 "\n   (9) -> Quitter\n"
                 )
         reset_screen(banner)
@@ -163,7 +192,7 @@ if __name__ == "__main__":
                 redim.start(dossier, largeur2, hauteur2, tuple(background_color), format_final)
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
-            elif choix.strip() == "6":
+            elif choix.strip() == "5":
                 reset_screen(banner)
                 dimensions = [0, 0, 0, 0]
                 for pos, i in enumerate(dimensions):
@@ -183,10 +212,11 @@ if __name__ == "__main__":
                 hauteur1 = dimensions[1]
                 largeur2 = dimensions[2]
                 hauteur2 = dimensions[3]
+                sauvegarde_json(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
-            elif choix.strip() == "7":
+            elif choix.strip() == "6":
                 reset_screen(banner)
                 nouveau_background_color = [0, 0, 0]
                 print("\n[-] Modification de la couleur du background (Valeur RGB 0-255):\n")
@@ -203,10 +233,11 @@ if __name__ == "__main__":
                         except:
                             print("    >>>ERREUR<<< Valeur incorrecte.")
                 background_color = nouveau_background_color
+                sauvegarde_json(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
-            elif choix.strip() == "8":
+            elif choix.strip() == "7":
                 print("\n[-] Modification du format de sortie:\n")
                 nombre = 1
                 for i in formats_acceptes:
@@ -218,6 +249,7 @@ if __name__ == "__main__":
                     nouveau_format = int(nouveau_format.strip())
                     if nouveau_format > 0:
                         format_final = "." + formats_acceptes[nouveau_format - 1]
+                        sauvegarde_json(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                         print("\n[-] Modification effectue.")
                     else:
                         print(">>>ERREUR<<< Choix invalide.")
@@ -227,7 +259,24 @@ if __name__ == "__main__":
                     print(">>>ERREUR<<< Choix invalide.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
+            elif choix.strip() == "8":
+                reset_screen(banner)
+                print("\n[-] Reset des parametres.")
+                largeur1 = 500
+                hauteur1 = 350
+                largeur2 = 900
+                hauteur2 = 900
+                background_color = [255, 255, 255]
+                format_final = ".webp"
+                sauvegarde_json(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                print("\n[-] Modification effectue.")
+                input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
+                break
             elif choix.strip() == "9":
+                if platform != "linux":
+                    system("cls")
+                else:
+                    system("clear")
                 exit(0)
             else:
                 print("\n[-] Reponse invalide .")
