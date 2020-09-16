@@ -1,2 +1,8 @@
-Cpp
+# created by virtualenv automatically
+Scripts
+Lib
+Build
+Dist
+Test
 TEST
+pyvenv.cfg
