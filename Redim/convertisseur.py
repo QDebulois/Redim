@@ -1,6 +1,7 @@
 from PIL.Image import ANTIALIAS
 from PIL.Image import new as image_new
 from PIL.Image import open as image_open
+from os.path import isfile, isdir, join, mkdir, listdir
 
 
 class Redim():

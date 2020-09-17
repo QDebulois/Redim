@@ -1,20 +1,20 @@
 #!/usr/bin/python
 
-import json
-from os import system, listdir, mkdir, environ, getenv
+from os import system, listdir, environ, getenv
 from os.path import join, isfile, isdir, getmtime
 from sys import platform, exit
 from time import time
 from shutil import rmtree
 from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget
-from config import *
-from convertisseur import *
+from config import Config
+from convertisseur import Redim
 
 
 def nettoyage_pyinstaller(self):
     for i in listdir(environ["TMP"]):
         if i.startswith("_MEI") and isdir(i) and (int(getmtime(join(environ["TMP"], i))) < (time() - 86400)):
             rmtree(join(environ["TMP"], i))
+
 
 def reset_screen(banner):
     if platform != "linux":
@@ -23,7 +23,8 @@ def reset_screen(banner):
         system("clear")
     print(*banner)
 
-if __name__ == "__main__":
+
+def main():
     largeur1 = 500
     hauteur1 = 350
     largeur2 = 900
@@ -37,9 +38,9 @@ if __name__ == "__main__":
     while True:
         redim = Redim(formats_acceptes)
         if not isfile(join(json_path, "config_redim")):
-            config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+            Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
         else:
-            largeur1, hauteur1, largeur2, hauteur2, background_color, format_final = config.lecture(json_path)
+            largeur1, hauteur1, largeur2, hauteur2, background_color, format_final = Config.lecture(json_path)
         if platform != "linux":
             redim.nettoyage_pyinstaller()
         banner = (
@@ -100,7 +101,7 @@ if __name__ == "__main__":
                 hauteur1 = dimensions[1]
                 largeur2 = dimensions[2]
                 hauteur2 = dimensions[3]
-                config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
@@ -121,7 +122,7 @@ if __name__ == "__main__":
                         except:
                             print("    >>>ERREUR<<< Valeur incorrecte.")
                 background_color = nouveau_background_color
-                config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
@@ -137,7 +138,7 @@ if __name__ == "__main__":
                     nouveau_format = int(nouveau_format.strip())
                     if nouveau_format > 0:
                         format_final = "." + formats_acceptes[nouveau_format - 1]
-                        config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                        Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                         print("\n[-] Modification effectue.")
                     else:
                         print(">>>ERREUR<<< Choix invalide.")
@@ -156,7 +157,7 @@ if __name__ == "__main__":
                 hauteur2 = 900
                 background_color = [255, 255, 255]
                 format_final = ".webp"
-                config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
@@ -170,3 +171,7 @@ if __name__ == "__main__":
                 print("\n[-] Reponse invalide .")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
+
+
+if __name__ == "__main__":
+    main()
