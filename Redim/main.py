@@ -10,63 +10,36 @@ from config import Config
 from convertisseur import Redim
 
 
-def nettoyage_pyinstaller(self):
+def nettoyage_pyinstaller():
     for i in listdir(environ["TMP"]):
         if i.startswith("_MEI") and isdir(i) and (int(getmtime(join(environ["TMP"], i))) < (time() - 86400)):
             rmtree(join(environ["TMP"], i))
 
 
-def reset_screen(banner):
-    if platform != "linux":
-        system("cls")
-    else:
-        system("clear")
-    print(*banner)
-
-
 def main():
-    largeur1 = 500
-    hauteur1 = 350
-    largeur2 = 900
-    hauteur2 = 900
-    background_color = [255, 255, 255]
-    format_final = ".webp"
+    configuration = {
+            "largeur1": 500,
+            "hauteur1": 350,
+            "largeur2": 900,
+            "hauteur2": 900,
+            "background_color": [255, 255, 255],
+            "format_final": ".webp"
+            }
     formats_acceptes = ("jpg", "jpeg", "png", "bmp", "gif", "webp")
-    json_path = join(getenv("USERPROFILE"), "AppData", "Local", "Redim")
+    if platform != "linux":
+        json_path = join(getenv("USERPROFILE"), "AppData", "Local", "Redim")
+    else:
+        json_path = "."
     app = QApplication([])
     widget = QWidget()
     while True:
         redim = Redim(formats_acceptes)
         if not isfile(join(json_path, "config_redim")):
-            Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+            Config.sauvegarde(json_path, configuration)
         else:
-            largeur1, hauteur1, largeur2, hauteur2, background_color, format_final = Config.lecture(json_path)
+            configuration = Config.lecture(json_path)
         if platform != "linux":
             redim.nettoyage_pyinstaller()
-        banner = (
-                "\n  ____                 _                 ____   ____ \n",
-                "|  _ \\ _ __ ___ _ __ (_)_   _ _ __ ___ |  _ \\ / ___|\n",
-                "| |_) | '__/ _ \\ '_ \\| | | | | '_ ` _ \\| |_) | |    \n",
-                "|  __/| | |  __/ | | | | |_| | | | | | |  __/| |___ \n",
-                "|_|   |_|  \\___|_| |_|_|\\__,_|_| |_| |_|_|    \\____|\n",
-                "\n######################################################\n",
-                "\n[-] taille 1:", largeur1, "x", hauteur1, ", taille 2:", largeur2, "x", hauteur2,
-                "\n[-] rgb background:", background_color,
-                "\n[-] formats acceptes:", formats_acceptes,
-                "\n[-] format de sortie:", format_final,
-                "\n\n######################################################"
-                )
-        menu = (
-                "\n[-] Que faire?\n",
-                "\n   (1) -> Conversion (", largeur1, "x", hauteur1, "px et", largeur2, "x", hauteur2, "px)",
-                "\n   (5) -> Modification des tailles",
-                "\n   (6) -> Modification du RGB",
-                "\n   (7) -> Modification du format de sortie",
-                "\n   (8) -> Reset des parametres",
-                "\n   (9) -> Quitter\n"
-                )
-        reset_screen(banner)
-        print(*menu)
         choix = input("[>] Choix (numero) : ")
         while True:
             reset_screen(banner)
@@ -75,10 +48,12 @@ def main():
                         widget,
                         "Dossier a travailler."
                         )
-                print("\n[-] travail pour", largeur1, "x", hauteur1, "px :")
-                redim.start(dossier, largeur1, hauteur1, tuple(background_color), format_final)
-                print("\n[-] travail pour", largeur2, "x", hauteur2, "px :")
-                redim.start(dossier, largeur2, hauteur2, tuple(background_color), format_final)
+                print("\n[-] travail pour", configuration["largeur1"], "x", configuration["hauteur1"], "px :")
+                redim.start(dossier, configuration["largeur1"], configuration["hauteur1"],
+                            tuple(configuration["background_color"]), configuration["format_final"])
+                print("\n[-] travail pour", configuration["largeur2"], "x", configuration["hauteur2"], "px :")
+                redim.start(dossier, configuration["largeur2"], configuration["hauteur2"],
+                            tuple(configuration["background_color"]), configuration["format_final"])
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
             elif choix.strip() == "5":
@@ -97,11 +72,11 @@ def main():
                             break
                         except:
                             print("    >>>ERREUR<<< Valeur incorrecte.")
-                largeur1 = dimensions[0]
-                hauteur1 = dimensions[1]
-                largeur2 = dimensions[2]
-                hauteur2 = dimensions[3]
-                Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                configuration["largeur1"] = dimensions[0]
+                configuration["hauteur1"] = dimensions[1]
+                configuration["largeur2"] = dimensions[2]
+                configuration["hauteur2"] = dimensions[3]
+                Config.sauvegarde(json_path, configuration)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
@@ -109,7 +84,7 @@ def main():
                 reset_screen(banner)
                 nouveau_background_color = [0, 0, 0]
                 print("\n[-] Modification de la couleur du background (Valeur RGB 0-255):\n")
-                for pos, i in enumerate(background_color):
+                for pos, i in enumerate(configuration["background_color"]):
                     while True:
                         texte = ["    [>] Valeur Rouge: ", "    [>] Valeur Vert: ", "    [>] Valeur Bleu: "]
                         nouveau_background_color[pos] = input(texte[pos])
@@ -121,8 +96,8 @@ def main():
                                 print("    >>>ERREUR<<< Valeur incorrecte.")
                         except:
                             print("    >>>ERREUR<<< Valeur incorrecte.")
-                background_color = nouveau_background_color
-                Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                configuration["background_color"] = nouveau_background_color
+                Config.sauvegarde(json_path, configuration)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
@@ -137,8 +112,8 @@ def main():
                 try:
                     nouveau_format = int(nouveau_format.strip())
                     if nouveau_format > 0:
-                        format_final = "." + formats_acceptes[nouveau_format - 1]
-                        Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                        configuration["format_final"] = "." + formats_acceptes[nouveau_format - 1]
+                        Config.sauvegarde(json_path, configuration)
                         print("\n[-] Modification effectue.")
                     else:
                         print(">>>ERREUR<<< Choix invalide.")
@@ -151,13 +126,13 @@ def main():
             elif choix.strip() == "8":
                 reset_screen(banner)
                 print("\n[-] Reset des parametres.")
-                largeur1 = 500
-                hauteur1 = 350
-                largeur2 = 900
-                hauteur2 = 900
-                background_color = [255, 255, 255]
-                format_final = ".webp"
-                Config.sauvegarde(json_path, largeur1, hauteur1, largeur2, hauteur2, background_color, format_final)
+                configuration["largeur1"] = 500
+                configuration["hauteur1"] = 350
+                configuration["largeur2"] = 900
+                configuration["hauteur2"] = 900
+                configuration["background_color"] = [255, 255, 255]
+                configuration["format_final"] = ".webp"
+                Config.sauvegarde(json_path, configuration)
                 print("\n[-] Modification effectue.")
                 input("\n[-] fin, appuyer sur \'entrer\' pour recommencer .")
                 break
