@@ -10,6 +10,7 @@ class Redim():
         self.formats_acceptes = formats_acceptes
 
     def start(self, dossier, larg, haut, background_color, format_final):
+        print("\n[-] travail pour", larg, "x", haut, "px :")
         if dossier == "":
             print("    >>>ERREUR<<< : Aucun dossier selectionne.")
             return
