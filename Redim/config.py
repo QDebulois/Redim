@@ -3,7 +3,7 @@ ainsi que la gestion de la supression des fichiers anciennement décompressés
 par pyinstaller"""
 
 from sys import platform
-from os import mkdir, listdir, environ, getenv
+from os import mkdir, listdir, environ, getenv, system
 from os.path import isdir, join, getmtime, isfile
 from time import time
 from shutil import rmtree
@@ -69,3 +69,9 @@ class Config():
                             int(getmtime(join(environ["TMP"], i)))
                             < (time() - 86400)):
                 rmtree(join(environ["TMP"], i))
+
+    @staticmethod
+    def redimensionnement_fenetre():
+        """Redimensionne la fenetre du CMD sous windows"""
+        if platform != "linux":
+            system("mode con: cols=70 lines=35")

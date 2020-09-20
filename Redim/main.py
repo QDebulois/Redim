@@ -15,6 +15,7 @@ def main():
     widget = QWidget()
     config = Config()
     redim = Redim()
+    config.redimensionnement_fenetre()
     while True:
         configuration = config.lecture()
         tui = Ui(configuration)
