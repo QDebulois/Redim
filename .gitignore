@@ -4,7 +4,7 @@ Lib
 Build
 Dist
 Test
-TEST
 Cpp
 Redim/__pycache__
+Redim/config
 pyvenv.cfg

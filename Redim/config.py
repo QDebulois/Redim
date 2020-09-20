@@ -1,19 +1,50 @@
-import json
+from sys import platform
+from os import mkdir, listdir, environ, getenv
+from os.path import isdir, join, getmtime, isfile
 from time import time
 from shutil import rmtree
-from os import mkdir, listdir, environ
-from os.path import isdir, join, getmtime
+import json
 
 
 class Config():
-    def sauvegarde(self, json_path, configuration):
-        if not isdir(json_path):
-            mkdir(json_path)
-        with open(join(json_path, "config_redim"), "w") as f:
-            json.dump(configuration, f)
+    def __init__(self):
+        self._base_configuration = {
+            "dimensions": [[500, 350], [900, 900]],
+            "background": [255, 255, 255],
+            "format_final": ".webp",
+            "formats_acceptes": (
+                "jpg",
+                "jpeg",
+                "png",
+                "bmp",
+                "gif",
+                "webp"
+            )
+        }
+        if platform != "linux":
+            self.json_path = join(
+                getenv("USERPROFILE"),
+                "AppData",
+                "Local",
+                "Redim"
+            )
+        else:
+            self.json_path = "."
+        if platform != "linux":
+            self.nettoyage_pyinstaller()
 
-    def lecture(self, json_path):
-        with open(join(json_path, "config_redim"), "r") as f:
+    def sauvegarde(self, configuration):
+        if not isdir(self.json_path):
+            mkdir(self.json_path)
+        with open(join(self.json_path, "config"), "w") as f:
+            json.dump(configuration, f)
+        print("\n[-] Modification enregistree.")
+
+    def lecture(self):
+        if not isfile(join(self.json_path, "config")):
+            self.sauvegarde(self._base_configuration)
+            return self._base_configuration
+        with open(join(self.json_path, "config"), "r") as f:
             configuration = json.load(f)
         return configuration
 
