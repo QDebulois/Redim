@@ -52,7 +52,7 @@ class Redim():
         """Suppression de l'alpha (transparent) des photos"""
         img = img.convert("RGBA")
         if img.mode in ("RGBA", "LA"):
-            fond = image_new(img.mode[:-1], img.size, background)
+            fond = image_new(img.mode[:-1], img.size, tuple(background))
             fond.paste(img, img.split()[-1])
             img = fond
         img.convert("RGB")

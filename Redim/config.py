@@ -26,9 +26,10 @@ class Config():
                 "webp"
             )
         }
+        self.user_profile = getenv("USERPROFILE")
         if platform != "linux":
             self.json_path = join(
-                getenv("USERPROFILE"),
+                self.user_profile,
                 "AppData",
                 "Local",
                 "Redim"
