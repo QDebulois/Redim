@@ -79,13 +79,6 @@ class Redim():
         et sans alpha
         """
         for loop in range(len(configuration["dimensions"])):
-            print(
-                "\n[-] travail pour",
-                str(configuration["dimensions"][loop][0]),
-                "x",
-                str(configuration["dimensions"][loop][1]),
-                "px :"
-            )
             if dossier != "":
                 if isdir(dossier):
                     liste, destination = self.listage(
@@ -94,9 +87,18 @@ class Redim():
                         configuration["formats_acceptes"]
                     )
                 else:
-                    print("    >>>ERREUR<<< : Le dossier n'existe plus.")
+                    print("\n[ERREUR] : Le dossier n'existe plus.")
+                    return
             else:
-                print("    >>>ERREUR<<< : Aucun dossier selectionne.")
+                print("\n[ERREUR] : Aucun dossier selectionne.")
+                return
+            print(
+                "\n[-] travail pour",
+                str(configuration["dimensions"][loop][0]),
+                "x",
+                str(configuration["dimensions"][loop][1]),
+                "px :"
+            )
             for nom in liste:
                 print("    [+] Travail sur :", nom[1])
                 img = image_open(nom[0])
