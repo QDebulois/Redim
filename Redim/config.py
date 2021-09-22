@@ -2,32 +2,42 @@
 ainsi que la gestion de la supression des fichiers anciennement décompressés
 par pyinstaller"""
 
-from sys import platform
 from os import mkdir, listdir, environ, getenv, system
 from os.path import isdir, join, getmtime, isfile
 from time import time
 from shutil import rmtree
+import sys
 import json
+import logging
+import traceback
 
 
 class Config():
-    """Gestion de l'enregistrement des choix de l'utilisateur"""
+    """Gestion de l'enregistrement des choix de l'utilisateur
+    """
     def __init__(self):
         self.base_configuration = {
-            "dimensions": [[500, 350], [900, 900]],
+            "version": 1.0,
+            "dimensions": [[500, 350], [800, 800]],
             "background": [255, 255, 255],
-            "format_final": ".webp",
+            "transparence": False,
             "formats_acceptes": (
+                "webp",
+                "png",
                 "jpg",
                 "jpeg",
-                "png",
                 "bmp",
-                "gif",
-                "webp"
-            )
+                "gif"
+            ),
+            "formats_possibles": (
+                "webp",
+                "png",
+                "jpg"
+            ),
+            "format_choisi": ""
         }
         self.user_profile = getenv("USERPROFILE")
-        if platform != "linux":
+        if sys.platform != "linux":
             self.json_path = join(
                 self.user_profile,
                 "AppData",
@@ -36,7 +46,7 @@ class Config():
             )
         else:
             self.json_path = "."
-        if platform != "linux":
+        if sys.platform != "linux":
             self.nettoyage_pyinstaller()
 
     def sauvegarde(self, configuration):
@@ -60,9 +70,36 @@ class Config():
             configuration = json.load(file_config)
         return configuration
 
+    def reset(self):
+        """Suppression et réenregistrement de la configuration par défaut si
+        le dossier de configuration existe
+        """
+        if isdir(self.json_path):
+            rmtree(self.json_path)
+            self.sauvegarde(self.base_configuration)
+
+    @staticmethod
+    def excepthook(type, value, error_traceback):
+        """Système de journalisation en cas de plantage.
+        """
+        logging.error(
+            "\nType: " + type.__name__ + "\n"
+            + "Info: " + str(value) + "\n\n"
+            + "".join(traceback.format_tb(error_traceback))
+            + "\n==============================="
+        )
+        print(
+            "\nTraceback:\n\n"
+            + "Type: " + type.__name__ + "\n"
+            + "Info: " + str(value) + "\n\n"
+            + "".join(traceback.format_tb(error_traceback)) + "\n"
+        )
+        sys.exit(1)
+
     @staticmethod
     def nettoyage_pyinstaller():
-        """Supression des fichiers anciennement décompressés par pyinstaller"""
+        """Supression des fichiers anciennement décompressés par pyinstaller
+        """
         for i in listdir(environ["TMP"]):
             if i.startswith("_MEI")\
                 and isdir(i)\
@@ -73,6 +110,7 @@ class Config():
 
     @staticmethod
     def redimensionnement_fenetre():
-        """Redimensionne la fenetre du CMD sous windows"""
-        if platform != "linux":
+        """Redimensionne la fenetre du CMD sous windows
+        """
+        if sys.platform != "linux":
             system("mode con: cols=70 lines=35")

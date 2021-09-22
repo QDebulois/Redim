@@ -7,11 +7,16 @@ from os.path import isfile, isdir, join
 from PIL.Image import ANTIALIAS
 from PIL.Image import new as image_new
 from PIL.Image import open as image_open
+from PyQt5.QtCore import QThread, pyqtSignal
 
 
-class Redim():
+class Redim(QThread):
     """Classe principale de Redim, travail sur les photos"""
+    _progress_bar_value = pyqtSignal(int)
+    _travail_sur_value = pyqtSignal(str)
+
     def __init__(self):
+        super().__init__()
         self.__character_underscore = (" ", "-")
         self.__character_indesirable = (
             "(", ")", "[", "]", "{", "}", "'", "#", "¨",
@@ -20,17 +25,18 @@ class Redim():
         )
         self.__adverbes_multplicatifs = (
             "_bis", "_ter", "_quater", "_quinquies",
-            "_sexies", "_septies"
+            "_sexies", "_septies", "_octies", "_nonies",
+            "_decies"
         )
 
-    def rennomage(self, origine_nom, larg, format_final):
+    def rennomage(self, origine_nom, larg, format_choisi):
         """Formatage du nom en retirant tous ces charactères hideux"""
         nouveau_nom = origine_nom
         for i in self.__character_indesirable:
             nouveau_nom = nouveau_nom.replace(i, "")
         for i in self.__character_underscore:
             nouveau_nom = nouveau_nom.replace(i, "_")
-        return nouveau_nom.lower() + "_modif_" + str(larg) + format_final
+        return nouveau_nom.lower() + "_modif_" + str(larg) + format_choisi
 
     @staticmethod
     def listage(dossier, larg, formats_acceptes):
@@ -73,12 +79,19 @@ class Redim():
             img = img.resize((larg, nouvelle_haut), ANTIALIAS)
         return img
 
-    def main(self, dossier, configuration):
+    def main(self, dossier, configuration, transparency=False):
         """Fonction principale, execute toutes les method dans l'ordre
         pour sauvegarder la photos aux bonnes dimensions, au bon format,
         et sans alpha
         """
         for loop in range(len(configuration["dimensions"])):
+            print(
+                "\n[-] travail pour",
+                str(configuration["dimensions"][loop][0]),
+                "x",
+                str(configuration["dimensions"][loop][1]),
+                "px :"
+            )
             if dossier != "":
                 if isdir(dossier):
                     liste, destination = self.listage(
@@ -87,19 +100,11 @@ class Redim():
                         configuration["formats_acceptes"]
                     )
                 else:
-                    print("\n[ERREUR] : Le dossier n'existe plus.")
-                    return
+                    print("    >>>ERREUR<<< : Le dossier n'existe plus.")
             else:
-                print("\n[ERREUR] : Aucun dossier selectionne.")
-                return
-            print(
-                "\n[-] travail pour",
-                str(configuration["dimensions"][loop][0]),
-                "x",
-                str(configuration["dimensions"][loop][1]),
-                "px :"
-            )
-            for nom in liste:
+                print("    >>>ERREUR<<< : Aucun dossier selectionne.")
+            for index, nom in enumerate(liste):
+                self._travail_sur_value.emit(nom[1])
                 print("    [+] Travail sur :", nom[1])
                 img = image_open(nom[0])
                 print(
@@ -109,7 +114,8 @@ class Redim():
                     img.size[1],
                     "px"
                 )
-                if nom[1].rsplit(".", 1)[-1] in ("png", "webp"):
+                if nom[1].rsplit(".", 1)[-1] in ("png", "webp") \
+                        and not configuration["transparence"]:
                     img = self.suppression_de_alpha(
                         img,
                         configuration["background"]
@@ -129,7 +135,7 @@ class Redim():
                 nouveau_nom = self.rennomage(
                     nom[1].rsplit(".", 1)[0],
                     configuration["dimensions"][loop][0],
-                    configuration["format_final"]
+                    configuration["format_choisi"]
                 )
                 fond = image_new(
                     "RGB",
@@ -139,6 +145,8 @@ class Redim():
                     ),
                     tuple(configuration["background"])
                 )
+                if configuration["transparence"]:
+                    fond.putalpha(0)
                 fond.paste(
                     img,
                     (
@@ -152,10 +160,19 @@ class Redim():
                     nom_deja_present = nouveau_nom
                     iteration = 0
                     while isfile(join(destination, nom_deja_present)):
+                        if iteration == 9:
+                            self._travail_sur_value.emit("")
+                            self._progress_bar_value.emit(0)
+                            return 1
                         nom_deja_present = nouveau_nom.rsplit(".", 1)[0]\
                             + self.__adverbes_multplicatifs[iteration]\
-                            + configuration["format_final"]
+                            + configuration["format_choisi"]
                         iteration += 1
                     fond.save(join(destination, nom_deja_present))
                 else:
                     fond.save(join(destination, nouveau_nom))
+                self._progress_bar_value.emit(
+                    100 / len(liste) / len(configuration["dimensions"])
+                    * (loop * len(liste) + (index + 1))
+                )
+        return 0
